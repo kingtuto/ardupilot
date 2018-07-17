@@ -85,6 +85,16 @@ void Copter::rpm_update(void)
 #endif
 }
 
+/*
+  update custom sensor
+ */
+void Copter::custom_sensor_update(void)
+{
+#if CUSTOM_SENSOR_ENABLED == ENABLED
+    gas_sensor.update();
+#endif
+}
+
 // initialise compass
 void Copter::init_compass()
 {

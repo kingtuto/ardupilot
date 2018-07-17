@@ -153,6 +153,9 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #if RPM_ENABLED == ENABLED
     SCHED_TASK(rpm_update,            10,    200),
 #endif
+#if CUSTOM_SENSOR_ENABLED == ENABLED
+    SCHED_TASK(custom_sensor_update,  10,    200),
+#endif
     SCHED_TASK(compass_cal_update,   100,    100),
     SCHED_TASK(accel_cal_update,      10,    100),
     SCHED_TASK_CLASS(AP_TempCalibration,   &copter.g2.temp_calibration, update,          10, 100),

@@ -21,10 +21,11 @@
 #include <AP_RangeFinder/AP_RangeFinder.h>
 #include <AP_SerialManager/AP_SerialManager.h>
 #include <AP_HAL/utility/RingBuffer.h>
+#include <AP_CustomSensor/AP_CustomSensor.h>
 
 #define FRSKY_TELEM_PAYLOAD_STATUS_CAPACITY          5 // size of the message buffer queue (max number of messages waiting to be sent)
 
-/* 
+/*
 for FrSky D protocol (D-receivers)
 */
 // FrSky sensor hub data IDs
@@ -50,7 +51,7 @@ for FrSky D protocol (D-receivers)
 #define START_STOP_D                0x5E
 #define BYTESTUFF_D                 0x5D
 
-/* 
+/*
 for FrSky SPort and SPort Passthrough (OpenTX) protocols (X-receivers)
 */
 // FrSky Sensor IDs
@@ -67,7 +68,7 @@ for FrSky SPort and SPort Passthrough (OpenTX) protocols (X-receivers)
 #define START_STOP_SPORT            0x7E
 #define BYTESTUFF_SPORT             0x7D
 
-/* 
+/*
 for FrSky SPort Passthrough
 */
 // data bits preparation
@@ -113,7 +114,7 @@ for FrSky SPort Passthrough
 
 class AP_Frsky_Telem {
 public:
-    AP_Frsky_Telem(AP_AHRS &ahrs, const AP_BattMonitor &battery, const RangeFinder &rng);
+    AP_Frsky_Telem(AP_AHRS &ahrs, const AP_BattMonitor &battery, const RangeFinder &rng, const AP_CustomSensor &custom_sensor);
 
     /* Do not allow copies */
     AP_Frsky_Telem(const AP_Frsky_Telem &other) = delete;
@@ -149,6 +150,7 @@ private:
     AP_AHRS &_ahrs;
     const AP_BattMonitor &_battery;
     const RangeFinder &_rng;
+    const AP_CustomSensor &_custom_sensor;
     AP_HAL::UARTDriver *_port;                  // UART used to send data to FrSky receiver
     AP_SerialManager::SerialProtocol _protocol; // protocol used - detected using SerialManager's SERIAL#_PROTOCOL parameter
     bool _initialised_uart;
@@ -160,7 +162,7 @@ private:
     {
         uint8_t mav_type; // frame type (see MAV_TYPE in Mavlink definition file common.h)
     } _params;
-    
+
     struct
     {
         uint8_t control_mode;
@@ -172,7 +174,7 @@ private:
     uint32_t check_sensor_status_timer;
     uint32_t check_ekf_status_timer;
     uint8_t _paramID;
-    
+
     struct
     {
         char lat_ns, lon_ew;
@@ -201,8 +203,9 @@ private:
         uint32_t home_timer;
         uint32_t velandyaw_timer;
         uint32_t gps_latlng_timer;
+        uint32_t custom_sensor_timer;
     } _passthrough;
-    
+
     struct
     {
         bool sport_status;
@@ -211,20 +214,20 @@ private:
         uint8_t vario_call;
         uint8_t various_call;
     } _SPort;
-    
+
     struct
     {
         uint32_t last_200ms_frame;
         uint32_t last_1000ms_frame;
     } _D;
-    
+
     struct
     {
         uint32_t chunk; // a "chunk" (four characters/bytes) at a time of the queued message to be sent
         uint8_t repeats; // send each message "chunk" 3 times to make sure the entire messsage gets through without getting cut
         uint8_t char_index; // index of which character to get in the message
     } _msg_chunk;
-    
+
     // main transmission function when protocol is FrSky SPort Passthrough (OpenTX)
     void send_SPort_Passthrough(void);
     // main transmission function when protocol is FrSky SPort
@@ -253,6 +256,7 @@ private:
     uint32_t calc_home(void);
     uint32_t calc_velandyaw(void);
     uint32_t calc_attiandrng(void);
+    uint32_t calc_custom_sensor(void);
     uint16_t prep_number(int32_t number, uint8_t digits, uint8_t power);
 
     // methods to convert flight controller data to FrSky D or SPort format

@@ -141,7 +141,7 @@ NOINLINE void Copter::send_extended_status1(mavlink_channel_t chan)
     }
 
     update_sensor_status_flags();
-    
+
     mavlink_msg_sys_status_send(
         chan,
         control_sensors_present,
@@ -191,6 +191,15 @@ void NOINLINE Copter::send_rpm(mavlink_channel_t chan)
 #endif
 }
 
+/*
+  send custom sensor packet
+ */
+void NOINLINE Copter::send_custom_sensor(mavlink_channel_t chan)
+{
+#if CUSTOM_SENSOR_ENABLED == ENABLED
+        mavlink_msg_gas_sensor_send(chan, gas_sensor.concentration());
+#endif
+}
 
 /*
   send PID tuning message
@@ -305,6 +314,13 @@ bool GCS_MAVLINK_Copter::try_send_message(enum ap_message id)
 #if RPM_ENABLED == ENABLED
         CHECK_PAYLOAD_SIZE(RPM);
         copter.send_rpm(chan);
+#endif
+        break;
+
+    case MSG_GAS_SENSOR:
+#if CUSTOM_SENSOR_ENABLED == ENABLED
+        CHECK_PAYLOAD_SIZE(GAS_SENSOR);
+        copter.send_custom_sensor(chan);
 #endif
         break;
 
@@ -516,6 +532,7 @@ static const ap_message STREAM_EXTRA3_msgs[] = {
     MSG_VIBRATION,
     MSG_RPM,
     MSG_ESC_TELEMETRY,
+    MSG_GAS_SENSOR,
 };
 static const ap_message STREAM_ADSB_msgs[] = {
     MSG_ADSB_VEHICLE
@@ -1459,7 +1476,7 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
         copter.g2.toy_mode.handle_message(msg);
         break;
 #endif
-        
+
     default:
         handle_common_message(msg);
         break;

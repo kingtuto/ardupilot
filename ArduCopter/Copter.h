@@ -169,6 +169,11 @@
  #include <AP_RPM/AP_RPM.h>
 #endif
 
+//Custom sensor
+#if CUSTOM_SENSOR_ENABLED == ENABLED
+ #include <AP_CustomSensor/AP_CustomSensor.h>
+#endif
+
 // Local modules
 #include "Parameters.h"
 #if ADSB_ENABLED == ENABLED
@@ -247,6 +252,11 @@ private:
         LowPassFilterFloat alt_cm_filt; // altitude filter
         int8_t glitch_count;
     } rangefinder_state = { false, false, 0, 0 };
+
+//Gas sensor
+#if CUSTOM_SENSOR_ENABLED == ENABLED
+    AP_CustomSensor gas_sensor;
+#endif
 
 #if RPM_ENABLED == ENABLED
     AP_RPM rpm_sensor;
@@ -444,7 +454,7 @@ private:
 
 #if FRSKY_TELEM_ENABLED == ENABLED
     // FrSky telemetry support
-    AP_Frsky_Telem frsky_telemetry{ahrs, battery, rangefinder};
+    AP_Frsky_Telem frsky_telemetry{ahrs, battery, rangefinder, gas_sensor};
 #endif
 #if DEVO_TELEM_ENABLED == ENABLED
     AP_DEVO_Telem devo_telemetry{ahrs};
@@ -453,7 +463,7 @@ private:
 #if OSD_ENABLED == ENABLED
     AP_OSD osd;
 #endif
-    
+
     // Variables for extended status MAVLink messages
     uint32_t control_sensors_present;
     uint32_t control_sensors_enabled;
@@ -765,6 +775,7 @@ private:
     void send_extended_status1(mavlink_channel_t chan);
     void send_nav_controller_output(mavlink_channel_t chan);
     void send_rpm(mavlink_channel_t chan);
+    void send_custom_sensor(mavlink_channel_t chan); //gas_sensor
     void send_pid_tuning(mavlink_channel_t chan);
     void gcs_data_stream_send(void);
     void gcs_check_input(void);
@@ -872,6 +883,7 @@ private:
     void read_rangefinder(void);
     bool rangefinder_alt_ok();
     void rpm_update();
+    void custom_sensor_update();
     void init_compass();
     void compass_accumulate(void);
     void init_optflow();
